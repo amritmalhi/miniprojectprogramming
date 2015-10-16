@@ -1,0 +1,55 @@
+__author__ = 'Avaritia'
+
+from tkinter import *
+import requests
+from tkinter.filedialog import *
+import json
+import base64
+from urllib.request import urlopen
+import io
+from PIL import Image, ImageTk
+
+
+class Surface(Frame):
+    username = ''
+
+    def __init__(self, master, username):
+        super().__init__(master)
+        self.username = username
+        pictures = self.loadImage()
+        def printt():
+            global img
+            img = askopenfile(mode = 'rb')
+            r = requests.post('http://www.davidlieffijn.nl/photos/upload.php', files={'submit': 'true', 'fileToUpload': img})
+
+        self.title_label = Label(self.master, text="Surface", font=("Helvetica", 20))
+        self.title_label.grid(row=0, column=1, columnspan=2)
+
+        self.upload_button = Button(self.master, text="Upload photo", command=printt)
+        self.upload_button.grid(row=0, column=0, padx=50)
+
+        self.welcome_label = Label(self.master, text="Welcome " + username)
+        self.welcome_label.grid(row=0, column=3, padx=50)
+
+        i = 1
+        for picture in pictures:
+            self.photo = Label(self.master, image=picture, width=400)
+            self.photo.image = picture
+            self.photo.grid(row=i, column=1, columnspan=2)
+            i += 1
+
+
+
+
+    def loadImage(self):
+        r = requests.post('http://davidlieffijn.nl/photos/getphotos.php')
+        data = json.loads(r.text)
+        images = []
+        for i in data:
+            image_url = i['url']
+            fd = urlopen(image_url)
+            image_file = io.BytesIO(fd.read())
+            image = Image.open(image_file)
+            photo = ImageTk.PhotoImage(image)
+            images.append(photo)
+        return images
