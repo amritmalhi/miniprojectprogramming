@@ -2,20 +2,12 @@ __author__ = 'Avaritia'
 
 from tkinter import *
 import tkinter.messagebox as tm
-from surface import Surface
+from newsurface import Surface
 import hashlib
+import requests
 
 
 class LoginFrame(Frame):
-
-    label_1 = ''
-    label_2 = ''
-    label_3 = ''
-    label_4 = ''
-    label_5 = ''
-    label_6 = ''
-    label_7 = ''
-
 
     """Constructor for the loginscreen"""
     def __init__(self, master):
@@ -79,19 +71,14 @@ class LoginFrame(Frame):
         password = n.hexdigest()
         print(username, password)
 
-        with open("users.dat") as fd:
-            users = dict(line.strip().split(None, 1) for line in fd)
-        if username in users:
-            if users[username] == password:
-                print(username, "logged in")
-                self.newWindow = Toplevel(self.master)
-                self.app = Surface(self.newWindow)
-            else:
-                print("wrong combination")
-                tm.showerror("Login error", "Unknown combination")
-                self.clearall()
+        r = requests.post("http://davidlieffijn.nl/photos/login.php", data={'username':username, 'password':password})
+        if r.text == 'true':
+            print(username, "logged in")
+            self.newWindow = Toplevel(self.master)
+            self.app = Surface(self.newWindow, username)
+            self.clearall()
         else:
-            print("unknown user")
+            print("Unknown combination")
             tm.showerror("Login error", "Unknown combination")
             self.clearall()
 
@@ -105,17 +92,13 @@ class LoginFrame(Frame):
         password = m.hexdigest()
         print(newusername, password)
         if (len(newusername) > 3) and (len(password) > 3):
-            with open("users.dat") as fd:
-                users = dict(line.strip().split(None, 1) for line in fd)
-            if newusername in users:
-                print("User already exists")
-                tm.showerror("Register error", "Username already exists")
+            r = requests.post('http://davidlieffijn.nl/photos/register.php', data={'username':newusername, 'password':password})
+            print(r.text)
+            if r.text == 'true':
+                tm.showinfo("Registration", "A new account has been created for user " + newusername)
                 self.clearall()
             else:
-                usersfile = open("users.dat", 'a')
-                usersfile.write("\n" + newusername + " " + password)
-                usersfile.close()
-                tm.showinfo("Registered", "User "+ newusername + " has successfully been registered. You can now log in with your new account.")
+                tm.showerror("Registration", "Username already exists")
                 self.clearall()
         else:
             print("Username or password not long enough")
